@@ -8,7 +8,8 @@ module.exports = new class extends Tool {
 
             name: "getMember",
 
-            description: "Obtém informações de um membro do servidor.",
+            description:
+                "Obtém informações de um membro do servidor usando APENAS o ID numérico do Discord. Nunca use nomes ou apelidos. Se você possui apenas um nome, utilize searchMember antes.",
 
             category: "Members",
 
@@ -43,6 +44,8 @@ module.exports = new class extends Tool {
 
     async execute(message, args) {
 
+        console.log("[getMember] Args recebidos:", args);
+        
         const member = await message.guild.members.fetch(args.userId)
             .catch(() => null);
 

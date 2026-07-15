@@ -1,44 +1,53 @@
+const {
+    PermissionFlagsBits
+} = require("discord.js");
+
 const Tool = require("../../structures/Tool");
-const ToolManager = require("../../ai/ToolManager");
 
 module.exports = new class extends Tool {
 
-
-    constructor(){
+    constructor() {
 
         super({
 
-            name:"removeTimeout",
+            name: "removeTimeout",
 
-            description:"Remove o timeout de um membro.",
+            description: "Remove o timeout de um membro.",
 
-            category:"Moderation",
+            category: "Moderation",
 
-            requiredPermission:"ModerateMembers",
+            guildOnly: true,
 
-            botPermission:"ModerateMembers",
+            permissions: [
+                PermissionFlagsBits.ModerateMembers
+            ],
 
-            requiresTarget:true,
+            parameters: {
 
+                type: "object",
 
-            parameters:{
+                properties: {
 
-                type:"object",
+                    userId: {
 
-                properties:{
+                        type: "string",
 
-                    userId:{
+                        description: "ID do membro."
 
-                        type:"string"
+                    },
+
+                    reason: {
+
+                        type: "string",
+
+                        description: "Motivo da remoção do timeout."
 
                     }
 
                 },
 
-                required:[
-
+                required: [
                     "userId"
-
                 ]
 
             }
@@ -47,70 +56,126 @@ module.exports = new class extends Tool {
 
     }
 
+    async execute(message, args) {
 
-
-    async execute(message,args){
-
+        const reason =
+            args.reason ?? "Timeout removido.";
 
         const member =
-            await ToolManager.getMember(
-                message,
-                args.userId
-            );
+            await message.guild.members
+                .fetch(args.userId)
+                .catch(() => null);
 
-
-
-        if(!member){
+        if (!member) {
 
             return {
 
-                success:false,
+                success: false,
 
-                message:"Usuário não encontrado."
+                error: "Membro não encontrado."
 
             };
 
         }
 
-
-
-        const check =
-            ToolManager.checkHierarchy(
-                message,
-                member
-            );
-
-
-
-        if(!check.allowed){
+        if (member.id === message.guild.ownerId) {
 
             return {
 
-                success:false,
+                success: false,
 
-                message:check.reason
+                error: "Não posso remover timeout do dono do servidor."
 
             };
 
         }
 
+        if (member.id === message.client.user.id) {
 
+            return {
 
-        await member.timeout(null);
+                success: false,
 
+                error: "Não posso remover meu próprio timeout."
 
+            };
 
-        return {
+        }
 
-            success:true,
+        if (!member.moderatable) {
 
-            message:
-            `${member.user.username} teve o timeout removido.`
+            return {
 
-        };
+                success: false,
 
+                error: "Não tenho permissão para modificar este membro."
+
+            };
+
+        }
+
+        if (!member.communicationDisabledUntil) {
+
+            return {
+
+                success: false,
+
+                error: "Este membro não está em timeout."
+
+            };
+
+        }
+
+        try {
+
+            await member.timeout(
+
+                null,
+
+                reason
+
+            );
+
+            return {
+
+                success: true,
+
+                action: "removeTimeout",
+
+                target: {
+
+                    id: member.id,
+
+                    username: member.user.username,
+
+                    displayName: member.displayName
+
+                },
+
+                moderator: {
+
+                    id: message.author.id,
+
+                    username: message.author.username
+
+                },
+
+                reason
+
+            };
+
+        } catch (error) {
+
+            return {
+
+                success: false,
+
+                error: error.message
+
+            };
+
+        }
 
     }
-
 
 };

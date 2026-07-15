@@ -1,5 +1,8 @@
+const {
+    PermissionFlagsBits
+} = require("discord.js");
+
 const Tool = require("../../structures/Tool");
-const ToolManager = require("../../ai/ToolManager");
 
 module.exports = new class extends Tool {
 
@@ -13,11 +16,11 @@ module.exports = new class extends Tool {
 
             category: "Moderation",
 
-            requiredPermission: "BanMembers",
+            guildOnly: true,
 
-            botPermission: "BanMembers",
-
-            requiresTarget: true,
+            permissions: [
+                PermissionFlagsBits.BanMembers
+            ],
 
             parameters: {
 
@@ -29,7 +32,7 @@ module.exports = new class extends Tool {
 
                         type: "string",
 
-                        description: "ID do usuário que será banido."
+                        description: "ID do membro."
 
                     },
 
@@ -38,6 +41,14 @@ module.exports = new class extends Tool {
                         type: "string",
 
                         description: "Motivo do banimento."
+
+                    },
+
+                    deleteMessageSeconds: {
+
+                        type: "integer",
+
+                        description: "Segundos de mensagens para apagar (0 a 604800)."
 
                     }
 
@@ -53,15 +64,26 @@ module.exports = new class extends Tool {
 
     }
 
-
     async execute(message, args) {
 
+        const reason =
+            args.reason ?? "Nenhum motivo informado.";
 
-        const member = await ToolManager.getMember(
-            message,
-            args.userId
-        );
+        const deleteMessageSeconds =
+            Math.max(
+                0,
+                Math.min(
+                    Number(args.deleteMessageSeconds ?? 0),
+                    604800
+                )
+            );
 
+        // Busca o membro
+
+        const member =
+            await message.guild.members
+                .fetch(args.userId)
+                .catch(() => null);
 
         if (!member) {
 
@@ -69,55 +91,120 @@ module.exports = new class extends Tool {
 
                 success: false,
 
-                message: "Usuário não encontrado."
+                error: "Membro não encontrado."
 
             };
 
         }
 
+        // Não permitir banir o dono
 
-
-        const check = ToolManager.checkHierarchy(
-            message,
-            member
-        );
-
-
-        if (!check.allowed) {
+        if (member.id === message.guild.ownerId) {
 
             return {
 
                 success: false,
 
-                message: check.reason
+                error: "Não posso banir o dono do servidor."
 
             };
 
         }
 
+        // Não permitir banir o próprio bot
 
+        if (member.id === message.client.user.id) {
 
-        await member.ban({
+            return {
 
-            reason:
-                args.reason ??
-                "Banido pelo JeffinPVP_Bot"
+                success: false,
 
-        });
+                error: "Não posso banir a mim mesmo."
 
+            };
 
+        }
 
-        return {
+        // Não permitir banir quem executou
 
-            success: true,
+        if (member.id === message.author.id) {
 
-            message:
-                `${member.user.username} foi banido.`
+            return {
 
-        };
+                success: false,
 
+                error: "Você não pode banir a si mesmo."
+
+            };
+
+        }
+
+        // Hierarquia
+
+        if (!member.bannable) {
+
+            return {
+
+                success: false,
+
+                error: "Não tenho permissão para banir este membro."
+
+            };
+
+        }
+
+        try {
+
+            await member.ban({
+
+                reason,
+
+                deleteMessageSeconds
+
+            });
+
+            return {
+
+                success: true,
+
+                action: "ban",
+
+                target: {
+
+                    id: member.id,
+
+                    username: member.user.username,
+
+                    displayName: member.displayName
+
+                },
+
+                moderator: {
+
+                    id: message.author.id,
+
+                    username: message.author.username
+
+                },
+
+                reason,
+
+                deleteMessageSeconds
+
+            };
+
+        } catch (error) {
+
+            return {
+
+                success: false,
+
+                error: error.message
+
+            };
+
+        }
 
     }
-
 
 };

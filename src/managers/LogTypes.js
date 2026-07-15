@@ -1,0 +1,38 @@
+module.exports = {
+
+    // Moderação
+    BAN: "BAN",
+    UNBAN: "UNBAN",
+    KICK: "KICK",
+    WARN: "WARN",
+    REMOVE_WARN: "REMOVE_WARN",
+    TIMEOUT: "TIMEOUT",
+    REMOVE_TIMEOUT: "REMOVE_TIMEOUT",
+    PURGE: "PURGE",
+    LOCK: "LOCK",
+    UNLOCK: "UNLOCK",
+    SLOWMODE: "SLOWMODE",
+
+    // Economia
+    DAILY: "DAILY",
+    WORK: "WORK",
+    CRIME: "CRIME",
+    ROB: "ROB",
+    MONEY_ADD: "MONEY_ADD",
+    MONEY_REMOVE: "MONEY_REMOVE",
+    TRANSFER: "TRANSFER",
+
+    // Jogos
+    SLOTS: "SLOTS",
+    BLACKJACK: "BLACKJACK",
+    COINFLIP: "COINFLIP",
+    ROULETTE: "ROULETTE",
+
+    // Tickets
+    TICKET_CREATE: "TICKET_CREATE",
+    TICKET_CLOSE: "TICKET_CLOSE",
+
+    // IA
+    AI_COMMAND: "AI_COMMAND"
+
+};

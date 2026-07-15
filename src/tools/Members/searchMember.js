@@ -9,7 +9,8 @@ module.exports = new class extends Tool {
 
             name: "searchMember",
 
-            description: "Procura membros pelo nome.",
+            description:
+                "Procura um membro do servidor pelo nome, username ou apelido e retorna o ID correto do Discord para usar em outras ferramentas.",
 
             category: "Members",
 

@@ -1,61 +1,62 @@
+const {
+    PermissionFlagsBits
+} = require("discord.js");
+
 const Tool = require("../../structures/Tool");
-const ToolManager = require("../../ai/ToolManager");
 
 module.exports = new class extends Tool {
 
-
-    constructor(){
+    constructor() {
 
         super({
 
-            name:"timeoutMember",
+            name: "timeoutMember",
 
-            description:"Aplica timeout (mute) em um membro.",
+            description: "Aplica timeout em um membro do servidor.",
 
-            category:"Moderation",
+            category: "Moderation",
 
-            requiredPermission:"ModerateMembers",
+            guildOnly: true,
 
-            botPermission:"ModerateMembers",
+            permissions: [
+                PermissionFlagsBits.ModerateMembers
+            ],
 
-            requiresTarget:true,
+            parameters: {
 
+                type: "object",
 
-            parameters:{
+                properties: {
 
-                type:"object",
+                    userId: {
 
-                properties:{
+                        type: "string",
 
-                    userId:{
-
-                        type:"string"
-
-                    },
-
-                    minutes:{
-
-                        type:"number",
-
-                        description:"Tempo do timeout em minutos."
+                        description: "ID do membro."
 
                     },
 
-                    reason:{
+                    duration: {
 
-                        type:"string"
+                        type: "integer",
+
+                        description: "Duração do timeout em minutos."
+
+                    },
+
+                    reason: {
+
+                        type: "string",
+
+                        description: "Motivo do timeout."
 
                     }
 
                 },
 
-
-                required:[
-
+                required: [
                     "userId",
-
-                    "minutes"
-
+                    "duration"
                 ]
 
             }
@@ -64,81 +65,175 @@ module.exports = new class extends Tool {
 
     }
 
+    async execute(message, args) {
 
-
-    async execute(message,args){
-
-
-        const member =
-            await ToolManager.getMember(
-                message,
-                args.userId
-            );
-
-
-
-        if(!member){
-
-            return {
-
-                success:false,
-
-                message:"Usuário não encontrado."
-
-            };
-
-        }
-
-
-
-        const check =
-            ToolManager.checkHierarchy(
-                message,
-                member
-            );
-
-
-        if(!check.allowed){
-
-            return {
-
-                success:false,
-
-                message:check.reason
-
-            };
-
-        }
-
-
+        const reason =
+            args.reason ?? "Nenhum motivo informado.";
 
         const duration =
-            args.minutes * 60 * 1000;
+            Number(args.duration);
 
+        if (isNaN(duration) || duration <= 0) {
 
+            return {
 
-        await member.timeout(
+                success: false,
 
-            duration,
+                error: "A duração deve ser um número maior que zero."
 
-            args.reason ??
-            "Timeout aplicado pelo JeffinPVP_Bot"
+            };
 
-        );
+        }
 
+        // Discord permite até 28 dias
 
+        const MAX_MINUTES = 28 * 24 * 60;
 
-        return {
+        if (duration > MAX_MINUTES) {
 
-            success:true,
+            return {
 
-            message:
-            `${member.user.username} recebeu timeout por ${args.minutes} minutos.`
+                success: false,
 
-        };
+                error: "O timeout máximo permitido é de 28 dias."
 
+            };
+
+        }
+
+        const member =
+            await message.guild.members
+                .fetch(args.userId)
+                .catch(() => null);
+
+        if (!member) {
+
+            return {
+
+                success: false,
+
+                error: "Membro não encontrado."
+
+            };
+
+        }
+
+        if (member.id === message.guild.ownerId) {
+
+            return {
+
+                success: false,
+
+                error: "Não posso aplicar timeout no dono do servidor."
+
+            };
+
+        }
+
+        if (member.id === message.client.user.id) {
+
+            return {
+
+                success: false,
+
+                error: "Não posso aplicar timeout em mim."
+
+            };
+
+        }
+
+        if (member.id === message.author.id) {
+
+            return {
+
+                success: false,
+
+                error: "Você não pode aplicar timeout em si mesmo."
+
+            };
+
+        }
+
+        if (!member.moderatable) {
+
+            return {
+
+                success: false,
+
+                error: "Não tenho permissão para aplicar timeout neste membro."
+
+            };
+
+        }
+
+        if (member.communicationDisabledUntil) {
+
+            return {
+
+                success: false,
+
+                error: "Este membro já está em timeout."
+
+            };
+
+        }
+
+        try {
+
+            await member.timeout(
+
+                duration * 60 * 1000,
+
+                reason
+
+            );
+
+            return {
+
+                success: true,
+
+                action: "timeout",
+
+                target: {
+
+                    id: member.id,
+
+                    username: member.user.username,
+
+                    displayName: member.displayName
+
+                },
+
+                moderator: {
+
+                    id: message.author.id,
+
+                    username: message.author.username
+
+                },
+
+                duration,
+
+                durationText: `${duration} minuto(s)`,
+
+                reason,
+
+                timeoutUntil: member.communicationDisabledUntil
+
+            };
+
+        } catch (error) {
+
+            return {
+
+                success: false,
+
+                error: error.message
+
+            };
+
+        }
 
     }
-
 
 };

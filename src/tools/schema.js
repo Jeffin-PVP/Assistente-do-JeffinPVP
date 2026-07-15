@@ -10,7 +10,15 @@ module.exports = Object.values(tools).map(tool => ({
 
         description: tool.description,
 
-        parameters: tool.parameters
+        parameters: tool.parameters || {
+
+            type: "object",
+
+            properties: {},
+
+            required: []
+
+        }
 
     }
 

@@ -1,8 +1,10 @@
+const {
+    PermissionFlagsBits
+} = require("discord.js");
+
 const Tool = require("../../structures/Tool");
-const ToolManager = require("../../ai/ToolManager");
 
 module.exports = new class extends Tool {
-
 
     constructor() {
 
@@ -14,36 +16,38 @@ module.exports = new class extends Tool {
 
             category: "Moderation",
 
-            requiredPermission: "KickMembers",
+            guildOnly: true,
 
-            botPermission: "KickMembers",
-
-            requiresTarget: true,
+            permissions: [
+                PermissionFlagsBits.KickMembers
+            ],
 
             parameters: {
 
-                type:"object",
+                type: "object",
 
                 properties: {
 
                     userId: {
 
-                        type:"string"
+                        type: "string",
+
+                        description: "ID do membro."
 
                     },
 
                     reason: {
 
-                        type:"string"
+                        type: "string",
+
+                        description: "Motivo da expulsão."
 
                     }
 
                 },
 
-                required:[
-
+                required: [
                     "userId"
-
                 ]
 
             }
@@ -52,75 +56,120 @@ module.exports = new class extends Tool {
 
     }
 
+    async execute(message, args) {
 
-
-    async execute(message,args) {
-
+        const reason =
+            args.reason ?? "Nenhum motivo informado.";
 
         const member =
-            await ToolManager.getMember(
-                message,
-                args.userId
-            );
+            await message.guild.members
+                .fetch(args.userId)
+                .catch(() => null);
 
-
-
-        if(!member){
+        if (!member) {
 
             return {
 
-                success:false,
+                success: false,
 
-                message:"Usuário não encontrado."
+                error: "Membro não encontrado."
 
             };
 
         }
 
-
-
-        const check =
-            ToolManager.checkHierarchy(
-                message,
-                member
-            );
-
-
-
-        if(!check.allowed){
+        if (member.id === message.guild.ownerId) {
 
             return {
 
-                success:false,
+                success: false,
 
-                message:check.reason
+                error: "Não posso expulsar o dono do servidor."
 
             };
 
         }
 
+        if (member.id === message.client.user.id) {
 
+            return {
 
-        await member.kick(
+                success: false,
 
-            args.reason ??
-            "Expulso pelo JeffinPVP_Bot"
+                error: "Não posso expulsar a mim mesmo."
 
-        );
+            };
 
+        }
 
+        if (member.id === message.author.id) {
 
-        return {
+            return {
 
-            success:true,
+                success: false,
 
-            message:
-            `${member.user.username} foi expulso.`
+                error: "Você não pode expulsar a si mesmo."
 
-        };
+            };
 
+        }
+
+        if (!member.kickable) {
+
+            return {
+
+                success: false,
+
+                error: "Não tenho permissão para expulsar este membro."
+
+            };
+
+        }
+
+        try {
+
+            await member.kick(reason);
+
+            return {
+
+                success: true,
+
+                action: "kick",
+
+                target: {
+
+                    id: member.id,
+
+                    username: member.user.username,
+
+                    displayName: member.displayName
+
+                },
+
+                moderator: {
+
+                    id: message.author.id,
+
+                    username: message.author.username
+
+                },
+
+                reason
+
+            };
+
+        } catch (error) {
+
+            return {
+
+                success: false,
+
+                error: error.message
+
+            };
+
+        }
 
     }
-
 
 };
