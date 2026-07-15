@@ -3,9 +3,15 @@ const {
 } = require("discord.js");
 
 const Tool = require("../../structures/Tool");
-const database = require("../../database/database");
+
+const WarningRepository = require("../../database/repositories/WarningRepository");
+
+const LogManager = require("../../managers/LogManager");
+const LogTypes = require("../../managers/LogTypes");
+
 
 module.exports = new class extends Tool {
+
 
     constructor() {
 
@@ -58,11 +64,22 @@ module.exports = new class extends Tool {
 
     }
 
+
+
     async execute(message, args) {
 
-        const member = await message.guild.members
-            .fetch(args.userId)
-            .catch(() => null);
+
+        const reason =
+            args.reason || "Nenhum motivo informado.";
+
+
+
+        const member =
+            await message.guild.members
+                .fetch(args.userId)
+                .catch(() => null);
+
+
 
         if (!member) {
 
@@ -76,6 +93,20 @@ module.exports = new class extends Tool {
 
         }
 
+
+
+        const targetData = {
+
+            id: member.id,
+
+            username: member.user.username,
+
+            displayName: member.displayName
+
+        };
+
+
+
         if (member.id === message.guild.ownerId) {
 
             return {
@@ -87,6 +118,8 @@ module.exports = new class extends Tool {
             };
 
         }
+
+
 
         if (member.id === message.client.user.id) {
 
@@ -100,6 +133,8 @@ module.exports = new class extends Tool {
 
         }
 
+
+
         if (member.id === message.author.id) {
 
             return {
@@ -111,6 +146,8 @@ module.exports = new class extends Tool {
             };
 
         }
+
+
 
         if (!member.moderatable) {
 
@@ -124,31 +161,104 @@ module.exports = new class extends Tool {
 
         }
 
-        const warning = {
 
-            guildId: message.guild.id,
-
-            userId: member.id,
-
-            moderatorId: message.author.id,
-
-            moderatorTag: message.author.tag,
-
-            reason: args.reason,
-
-            timestamp: Date.now()
-
-        };
 
         try {
 
-            await database.addWarning(warning);
+
+            await WarningRepository.create({
+
+                guildId: message.guild.id,
+
+                userId: member.id,
+
+                moderatorId: message.author.id,
+
+                reason
+
+            });
+
+
 
             const totalWarnings =
-                await database.getWarningCount(
-                    message.guild.id,
-                    member.id
-                );
+                await WarningRepository.count({
+
+                    guildId: message.guild.id,
+
+                    userId: member.id
+
+                });
+
+
+
+            let dmSent = true;
+
+
+
+            try {
+
+
+                await member.send({
+
+                    embeds: [
+
+                        {
+
+                            color: 0xffcc00,
+
+                            title:
+                                "⚠️ Você recebeu uma advertência",
+
+                            description:
+
+                                `Você recebeu uma advertência no servidor **${message.guild.name}**.\n\n` +
+
+                                `**Motivo:** ${reason}\n` +
+
+                                `**Aplicado por:** ${message.author.username}\n` +
+
+                                `**Total de advertências:** ${totalWarnings}`
+
+                        }
+
+                    ]
+
+                });
+
+
+            } catch {
+
+
+                dmSent = false;
+
+
+            }
+
+
+
+            await LogManager.send({
+
+                type: LogTypes.WARN_MEMBER,
+
+                guild: message.guild,
+
+                executor: message.member,
+
+                target: targetData,
+
+                reason,
+
+                extra: {
+
+                    warnings: totalWarnings,
+
+                    dmSent
+
+                }
+
+            });
+
+
 
             return {
 
@@ -156,15 +266,7 @@ module.exports = new class extends Tool {
 
                 action: "warn",
 
-                target: {
-
-                    id: member.id,
-
-                    username: member.user.username,
-
-                    displayName: member.displayName
-
-                },
+                target: targetData,
 
                 moderator: {
 
@@ -174,13 +276,20 @@ module.exports = new class extends Tool {
 
                 },
 
-                reason: args.reason,
+                reason,
 
-                warnings: totalWarnings
+                warnings: totalWarnings,
+
+                dmSent,
+
+                logged: true
 
             };
 
+
+
         } catch (error) {
+
 
             return {
 
@@ -190,8 +299,11 @@ module.exports = new class extends Tool {
 
             };
 
+
         }
 
+
     }
+
 
 };

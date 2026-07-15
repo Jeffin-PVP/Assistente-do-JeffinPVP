@@ -1,80 +1,200 @@
 module.exports = {
 
-    // Moderação
-    BAN: "BAN",
-    UNBAN: "UNBAN",
-    KICK: "KICK",
-    WARN: "WARN",
-    REMOVE_WARN: "REMOVE_WARN",
-    TIMEOUT: "TIMEOUT",
-    REMOVE_TIMEOUT: "REMOVE_TIMEOUT",
-    PURGE: "PURGE",
-    LOCK: "LOCK",
-    UNLOCK: "UNLOCK",
-    SLOWMODE: "SLOWMODE",
 
-    // Membros
+    // =========================
+    // MODERAÇÃO
+    // =========================
+
+
+    BAN: "BAN",
+
+    UNBAN_MEMBER: "UNBAN_MEMBER",
+
+    KICK: "KICK",
+
+    WARN: "WARN",
+
+    REMOVE_WARN: "REMOVE_WARN",
+
+    TIMEOUT: "TIMEOUT",
+
+    REMOVE_TIMEOUT: "REMOVE_TIMEOUT",
+
+    PURGE_MESSAGES: "PURGE_MESSAGES",
+
+    LOCK_CHANNEL: "LOCK_CHANNEL",
+
+    UNLOCK_CHANNEL: "UNLOCK_CHANNEL",
+
+    SLOWMODE_CHANNEL: "SLOWMODE_CHANNEL",
+
+
+
+
+    // =========================
+    // MEMBROS
+    // =========================
+
+
     MEMBER_JOIN: "MEMBER_JOIN",
+
     MEMBER_LEAVE: "MEMBER_LEAVE",
+
     MEMBER_BOOST: "MEMBER_BOOST",
+
     MEMBER_UNBOOST: "MEMBER_UNBOOST",
+
     MEMBER_NICKNAME: "MEMBER_NICKNAME",
 
-    // Mensagens
+
+
+
+    // =========================
+    // MENSAGENS
+    // =========================
+
+
     MESSAGE_DELETE: "MESSAGE_DELETE",
+
     MESSAGE_EDIT: "MESSAGE_EDIT",
+
     MESSAGE_BULK_DELETE: "MESSAGE_BULK_DELETE",
 
-    // Canais
+
+
+
+    // =========================
+    // CANAIS
+    // =========================
+
+
     CHANNEL_CREATE: "CHANNEL_CREATE",
+
     CHANNEL_DELETE: "CHANNEL_DELETE",
+
     CHANNEL_UPDATE: "CHANNEL_UPDATE",
 
-    // Cargos
+
+
+
+    // =========================
+    // CARGOS
+    // =========================
+
+
     ROLE_CREATE: "ROLE_CREATE",
+
     ROLE_DELETE: "ROLE_DELETE",
+
     ROLE_UPDATE: "ROLE_UPDATE",
+
     ROLE_ADD: "ROLE_ADD",
+
     ROLE_REMOVE: "ROLE_REMOVE",
 
-    // Voz
+
+
+
+    // =========================
+    // VOZ
+    // =========================
+
+
     VOICE_JOIN: "VOICE_JOIN",
+
     VOICE_LEAVE: "VOICE_LEAVE",
+
     VOICE_MOVE: "VOICE_MOVE",
 
-    // Economia
+
+
+
+    // =========================
+    // ECONOMIA
+    // =========================
+
+
     DAILY: "DAILY",
+
     WORK: "WORK",
+
     CRIME: "CRIME",
+
     ROB: "ROB",
+
     DEPOSIT: "DEPOSIT",
+
     WITHDRAW: "WITHDRAW",
+
     TRANSFER: "TRANSFER",
+
     BUY: "BUY",
+
     SELL: "SELL",
+
     MONEY_ADD: "MONEY_ADD",
+
     MONEY_REMOVE: "MONEY_REMOVE",
 
-    // Jogos
+
+
+
+    // =========================
+    // JOGOS
+    // =========================
+
+
     SLOTS: "SLOTS",
+
     BLACKJACK: "BLACKJACK",
+
     COINFLIP: "COINFLIP",
+
     ROULETTE: "ROULETTE",
 
-    // Tickets
+
+
+
+    // =========================
+    // TICKETS
+    // =========================
+
+
     TICKET_CREATE: "TICKET_CREATE",
+
     TICKET_CLOSE: "TICKET_CLOSE",
+
     TICKET_REOPEN: "TICKET_REOPEN",
+
     TICKET_DELETE: "TICKET_DELETE",
 
+
+
+
+    // =========================
     // IA
+    // =========================
+
+
     AI_COMMAND: "AI_COMMAND",
+
     AI_TOOL: "AI_TOOL",
+
     AI_ERROR: "AI_ERROR",
 
-    // Sistema
+
+
+
+    // =========================
+    // SISTEMA
+    // =========================
+
+
     BOT_START: "BOT_START",
+
     BOT_STOP: "BOT_STOP",
+
     DATABASE_ERROR: "DATABASE_ERROR"
+
 
 };

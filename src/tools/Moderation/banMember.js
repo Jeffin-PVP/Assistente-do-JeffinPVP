@@ -4,7 +4,12 @@ const {
 
 const Tool = require("../../structures/Tool");
 
+const LogManager = require("../../managers/LogManager");
+const LogTypes = require("../../managers/LogTypes");
+
+
 module.exports = new class extends Tool {
+
 
     constructor() {
 
@@ -48,7 +53,7 @@ module.exports = new class extends Tool {
 
                         type: "integer",
 
-                        description: "Segundos de mensagens para apagar (0 a 604800)."
+                        description: "Segundos de mensagens para apagar."
 
                     }
 
@@ -64,10 +69,14 @@ module.exports = new class extends Tool {
 
     }
 
+
+
     async execute(message, args) {
+
 
         const reason =
             args.reason ?? "Nenhum motivo informado.";
+
 
         const deleteMessageSeconds =
             Math.max(
@@ -78,12 +87,14 @@ module.exports = new class extends Tool {
                 )
             );
 
-        // Busca o membro
+
 
         const member =
             await message.guild.members
                 .fetch(args.userId)
                 .catch(() => null);
+
+
 
         if (!member) {
 
@@ -97,7 +108,19 @@ module.exports = new class extends Tool {
 
         }
 
-        // Não permitir banir o dono
+
+
+        const targetData = {
+
+            id: member.id,
+
+            username: member.user.username,
+
+            displayName: member.displayName
+
+        };
+
+
 
         if (member.id === message.guild.ownerId) {
 
@@ -111,7 +134,7 @@ module.exports = new class extends Tool {
 
         }
 
-        // Não permitir banir o próprio bot
+
 
         if (member.id === message.client.user.id) {
 
@@ -125,7 +148,7 @@ module.exports = new class extends Tool {
 
         }
 
-        // Não permitir banir quem executou
+
 
         if (member.id === message.author.id) {
 
@@ -139,7 +162,7 @@ module.exports = new class extends Tool {
 
         }
 
-        // Hierarquia
+
 
         if (!member.bannable) {
 
@@ -153,7 +176,10 @@ module.exports = new class extends Tool {
 
         }
 
+
+
         try {
+
 
             await member.ban({
 
@@ -163,21 +189,37 @@ module.exports = new class extends Tool {
 
             });
 
+
+
+            await LogManager.send({
+
+                type: LogTypes.BAN,
+
+                guild: message.guild,
+
+                executor: message.member,
+
+                target: targetData,
+
+                reason,
+
+                extra: {
+
+                    deleteMessageSeconds
+
+                }
+
+            });
+
+
+
             return {
 
                 success: true,
 
                 action: "ban",
 
-                target: {
-
-                    id: member.id,
-
-                    username: member.user.username,
-
-                    displayName: member.displayName
-
-                },
+                target: targetData,
 
                 moderator: {
 
@@ -189,11 +231,16 @@ module.exports = new class extends Tool {
 
                 reason,
 
-                deleteMessageSeconds
+                deleteMessageSeconds,
+
+                logged: true
 
             };
 
+
+
         } catch (error) {
+
 
             return {
 
@@ -203,8 +250,11 @@ module.exports = new class extends Tool {
 
             };
 
+
         }
 
+
     }
+
 
 };

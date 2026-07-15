@@ -4,7 +4,12 @@ const {
 
 const Tool = require("../../structures/Tool");
 
+const LogManager = require("../../managers/LogManager");
+const LogTypes = require("../../managers/LogTypes");
+
+
 module.exports = new class extends Tool {
+
 
     constructor() {
 
@@ -56,15 +61,22 @@ module.exports = new class extends Tool {
 
     }
 
+
+
     async execute(message, args) {
+
 
         const reason =
             args.reason ?? "Nenhum motivo informado.";
+
+
 
         const member =
             await message.guild.members
                 .fetch(args.userId)
                 .catch(() => null);
+
+
 
         if (!member) {
 
@@ -78,6 +90,20 @@ module.exports = new class extends Tool {
 
         }
 
+
+
+        const targetData = {
+
+            id: member.id,
+
+            username: member.user.username,
+
+            displayName: member.displayName
+
+        };
+
+
+
         if (member.id === message.guild.ownerId) {
 
             return {
@@ -89,6 +115,8 @@ module.exports = new class extends Tool {
             };
 
         }
+
+
 
         if (member.id === message.client.user.id) {
 
@@ -102,6 +130,8 @@ module.exports = new class extends Tool {
 
         }
 
+
+
         if (member.id === message.author.id) {
 
             return {
@@ -113,6 +143,8 @@ module.exports = new class extends Tool {
             };
 
         }
+
+
 
         if (!member.kickable) {
 
@@ -126,9 +158,30 @@ module.exports = new class extends Tool {
 
         }
 
+
+
         try {
 
+
             await member.kick(reason);
+
+
+
+            await LogManager.send({
+
+                type: LogTypes.KICK,
+
+                guild: message.guild,
+
+                executor: message.member,
+
+                target: targetData,
+
+                reason
+
+            });
+
+
 
             return {
 
@@ -136,15 +189,7 @@ module.exports = new class extends Tool {
 
                 action: "kick",
 
-                target: {
-
-                    id: member.id,
-
-                    username: member.user.username,
-
-                    displayName: member.displayName
-
-                },
+                target: targetData,
 
                 moderator: {
 
@@ -154,11 +199,16 @@ module.exports = new class extends Tool {
 
                 },
 
-                reason
+                reason,
+
+                logged: true
 
             };
 
+
+
         } catch (error) {
+
 
             return {
 
@@ -168,8 +218,11 @@ module.exports = new class extends Tool {
 
             };
 
+
         }
 
+
     }
+
 
 };

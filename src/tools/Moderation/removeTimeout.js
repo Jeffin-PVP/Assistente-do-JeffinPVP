@@ -4,7 +4,12 @@ const {
 
 const Tool = require("../../structures/Tool");
 
+const LogManager = require("../../managers/LogManager");
+const LogTypes = require("../../managers/LogTypes");
+
+
 module.exports = new class extends Tool {
+
 
     constructor() {
 
@@ -56,15 +61,22 @@ module.exports = new class extends Tool {
 
     }
 
+
+
     async execute(message, args) {
+
 
         const reason =
             args.reason ?? "Timeout removido.";
+
+
 
         const member =
             await message.guild.members
                 .fetch(args.userId)
                 .catch(() => null);
+
+
 
         if (!member) {
 
@@ -78,6 +90,20 @@ module.exports = new class extends Tool {
 
         }
 
+
+
+        const targetData = {
+
+            id: member.id,
+
+            username: member.user.username,
+
+            displayName: member.displayName
+
+        };
+
+
+
         if (member.id === message.guild.ownerId) {
 
             return {
@@ -89,6 +115,8 @@ module.exports = new class extends Tool {
             };
 
         }
+
+
 
         if (member.id === message.client.user.id) {
 
@@ -102,6 +130,8 @@ module.exports = new class extends Tool {
 
         }
 
+
+
         if (!member.moderatable) {
 
             return {
@@ -113,6 +143,8 @@ module.exports = new class extends Tool {
             };
 
         }
+
+
 
         if (!member.communicationDisabledUntil) {
 
@@ -126,7 +158,10 @@ module.exports = new class extends Tool {
 
         }
 
+
+
         try {
+
 
             await member.timeout(
 
@@ -136,21 +171,31 @@ module.exports = new class extends Tool {
 
             );
 
+
+
+            await LogManager.send({
+
+                type: LogTypes.REMOVE_TIMEOUT,
+
+                guild: message.guild,
+
+                executor: message.member,
+
+                target: targetData,
+
+                reason
+
+            });
+
+
+
             return {
 
                 success: true,
 
                 action: "removeTimeout",
 
-                target: {
-
-                    id: member.id,
-
-                    username: member.user.username,
-
-                    displayName: member.displayName
-
-                },
+                target: targetData,
 
                 moderator: {
 
@@ -160,11 +205,16 @@ module.exports = new class extends Tool {
 
                 },
 
-                reason
+                reason,
+
+                logged: true
 
             };
 
+
+
         } catch (error) {
+
 
             return {
 
@@ -174,8 +224,11 @@ module.exports = new class extends Tool {
 
             };
 
+
         }
 
+
     }
+
 
 };

@@ -1,356 +1,379 @@
-const fs = require("fs");
+const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
 
-class Database {
 
-    constructor() {
+// Local do banco
 
-        this.file = path.join(__dirname, "database.json");
+const dbPath = path.join(
+    __dirname,
+    "bot.sqlite"
+);
 
-        if (!fs.existsSync(this.file)) {
 
-            fs.writeFileSync(
-                this.file,
-                JSON.stringify({
-                    guilds: {},
-                    warnings: [],
-                    memories: [],
-                    economy: {}
-                }, null, 4)
+// Criar conexão
+
+const db = new sqlite3.Database(
+    dbPath,
+    (err) => {
+
+        if (err) {
+
+            console.error(
+                "❌ Erro ao conectar SQLite:",
+                err
+            );
+
+        } else {
+
+            console.log(
+                "🗄️ SQLite conectado"
             );
 
         }
 
     }
+);
 
-    // ============================
-    // Base
-    // ============================
 
-    read() {
+// Ativar foreign keys
 
-        return JSON.parse(
-            fs.readFileSync(this.file, "utf8")
-        );
+db.run(`
+    PRAGMA foreign_keys = ON;
+`);
 
-    }
 
-    save(data) {
 
-        fs.writeFileSync(
-            this.file,
-            JSON.stringify(data, null, 4)
-        );
+// Criar tabelas
 
-    }
+db.serialize(() => {
 
-    // ============================
-    // Guild
-    // ============================
 
-    getGuild(guildId) {
 
-        const data = this.read();
+    /*
+    =========================
+        USUÁRIOS
+    =========================
+    */
 
-        if (!data.guilds[guildId]) {
 
-            data.guilds[guildId] = {};
+    db.run(`
 
-            this.save(data);
+        CREATE TABLE IF NOT EXISTS users (
 
-        }
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-        return data.guilds[guildId];
+            user_id TEXT NOT NULL,
 
-    }
+            guild_id TEXT NOT NULL,
 
-    setGuild(guildId, guildData) {
 
-        const data = this.read();
+            coins INTEGER DEFAULT 0,
 
-        data.guilds[guildId] = guildData;
+            bank INTEGER DEFAULT 0,
 
-        this.save(data);
 
-    }
+            level INTEGER DEFAULT 1,
 
-    // ============================
-    // Configurações
-    // ============================
+            xp INTEGER DEFAULT 0,
 
-    setGuildConfig(guildId, key, value) {
 
-        const data = this.read();
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 
-        if (!data.guilds[guildId]) {
 
-            data.guilds[guildId] = {};
-
-        }
-
-        data.guilds[guildId][key] = value;
-
-        this.save(data);
-
-    }
-
-    getGuildConfig(guildId, key) {
-
-        const data = this.read();
-
-        if (!data.guilds[guildId]) {
-
-            return null;
-
-        }
-
-        return data.guilds[guildId][key] ?? null;
-
-    }
-
-    // ============================
-    // Logs
-    // ============================
-
-    setLogsChannel(guildId, channelId) {
-
-        this.setGuildConfig(
-            guildId,
-            "logsChannel",
-            channelId
-        );
-
-    }
-
-    getLogsChannel(guildId) {
-
-        return this.getGuildConfig(
-            guildId,
-            "logsChannel"
-        );
-
-    }
-
-    // ============================
-    // Advertências
-    // ============================
-
-    addWarning({
-
-        guildId,
-
-        userId,
-
-        moderatorId,
-
-        moderatorTag,
-
-        reason
-
-    }) {
-
-        const data = this.read();
-
-        const id =
-            data.warnings.length > 0
-                ? data.warnings[data.warnings.length - 1].id + 1
-                : 1;
-
-        const warning = {
-
-            id,
-
-            guildId,
-
-            userId,
-
-            moderatorId,
-
-            moderatorTag,
-
-            reason,
-
-            createdAt: Date.now()
-
-        };
-
-        data.warnings.push(warning);
-
-        this.save(data);
-
-        return warning;
-
-    }
-
-    getWarnings(guildId, userId) {
-
-        const data = this.read();
-
-        return data.warnings.filter(warning =>
-
-            warning.guildId === guildId &&
-            warning.userId === userId
+            UNIQUE(
+                user_id,
+                guild_id
+            )
 
         );
 
-    }
+    `);
 
-    getWarning(guildId, warningId) {
 
-        const data = this.read();
 
-        return data.warnings.find(warning =>
+    /*
+    =========================
+        TRANSAÇÕES
+    =========================
+    */
 
-            warning.guildId === guildId &&
-            warning.id === Number(warningId)
 
-        ) ?? null;
+    db.run(`
 
-    }
+        CREATE TABLE IF NOT EXISTS transactions (
 
-    getWarningCount(guildId, userId) {
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-        return this.getWarnings(
-            guildId,
-            userId
-        ).length;
 
-    }
+            user_id TEXT NOT NULL,
 
-    removeWarning(guildId, warningId) {
+            guild_id TEXT NOT NULL,
 
-        const data = this.read();
 
-        const index = data.warnings.findIndex(warning =>
+            amount INTEGER NOT NULL,
 
-            warning.guildId === guildId &&
-            warning.id === Number(warningId)
 
-        );
+            type TEXT NOT NULL,
 
-        if (index === -1) {
 
-            return false;
+            description TEXT,
 
-        }
 
-        data.warnings.splice(index, 1);
-
-        this.save(data);
-
-        return true;
-
-    }
-
-    clearWarnings(guildId, userId) {
-
-        const data = this.read();
-
-        const before = data.warnings.length;
-
-        data.warnings = data.warnings.filter(warning =>
-
-            !(warning.guildId === guildId &&
-              warning.userId === userId)
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 
         );
 
-        this.save(data);
+    `);
 
-        return before - data.warnings.length;
 
-    }
 
-    // ============================
-    // Memórias
-    // ============================
+    /*
+    =========================
+        WARNINGS
+    =========================
+    */
 
-    addMemory(memory) {
 
-        const data = this.read();
+    db.run(`
 
-        data.memories.push({
+        CREATE TABLE IF NOT EXISTS warnings (
 
-            id: Date.now(),
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-            ...memory
 
-        });
+            guild_id TEXT NOT NULL,
 
-        this.save(data);
 
-    }
+            user_id TEXT NOT NULL,
 
-    getMemories() {
 
-        return this.read().memories;
+            moderator_id TEXT NOT NULL,
 
-    }
 
-    removeMemory(id) {
+            reason TEXT NOT NULL,
 
-        const data = this.read();
 
-        data.memories = data.memories.filter(memory =>
-
-            memory.id !== id
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 
         );
 
-        this.save(data);
+    `);
 
-    }
 
-    // ============================
-    // Economia
-    // ============================
 
-    getBalance(userId) {
+    /*
+    =========================
+        INVENTÁRIO
+    =========================
+    */
 
-        const data = this.read();
 
-        return data.economy[userId] ?? 0;
+    db.run(`
 
-    }
+        CREATE TABLE IF NOT EXISTS inventories (
 
-    setBalance(userId, amount) {
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-        const data = this.read();
 
-        data.economy[userId] = amount;
+            user_id TEXT NOT NULL,
 
-        this.save(data);
+            guild_id TEXT NOT NULL,
 
-    }
 
-    addMoney(userId, amount) {
+            item_id TEXT NOT NULL,
 
-        const balance = this.getBalance(userId);
 
-        this.setBalance(
+            quantity INTEGER DEFAULT 1,
 
-            userId,
 
-            balance + amount
-
-        );
-
-    }
-
-    removeMoney(userId, amount) {
-
-        const balance = this.getBalance(userId);
-
-        this.setBalance(
-
-            userId,
-
-            Math.max(0, balance - amount)
+            UNIQUE(
+                user_id,
+                guild_id,
+                item_id
+            )
 
         );
 
-    }
+    `);
+
+
+
+    /*
+    =========================
+        COOLDOWNS
+    =========================
+    */
+
+
+    db.run(`
+
+        CREATE TABLE IF NOT EXISTS cooldowns (
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+
+            user_id TEXT NOT NULL,
+
+
+            guild_id TEXT NOT NULL,
+
+
+            command TEXT NOT NULL,
+
+
+            expires_at INTEGER NOT NULL,
+
+
+            UNIQUE(
+                user_id,
+                guild_id,
+                command
+            )
+
+        );
+
+    `);
+
+
+
+    /*
+    =========================
+        CONFIGURAÇÕES
+    =========================
+    */
+
+
+    db.run(`
+
+        CREATE TABLE IF NOT EXISTS guild_settings (
+
+            guild_id TEXT PRIMARY KEY,
+
+
+            log_channel TEXT,
+
+
+            economy_enabled INTEGER DEFAULT 1,
+
+
+            moderation_enabled INTEGER DEFAULT 1,
+
+
+            prefix TEXT DEFAULT "!"
+
+        );
+
+    `);
+
+
+
+});
+
+
+
+// Helpers
+
+
+function run(sql, params = []) {
+
+    return new Promise((resolve, reject) => {
+
+
+        db.run(
+            sql,
+            params,
+            function(err) {
+
+
+                if (err)
+                    reject(err);
+
+
+                else
+
+                    resolve(this);
+
+
+            }
+        );
+
+
+    });
 
 }
 
-module.exports = new Database();
+
+
+function get(sql, params = []) {
+
+    return new Promise((resolve, reject) => {
+
+
+        db.get(
+            sql,
+            params,
+            (err, row) => {
+
+
+                if (err)
+
+                    reject(err);
+
+
+                else
+
+                    resolve(row);
+
+
+            }
+        );
+
+
+    });
+
+}
+
+
+
+function all(sql, params = []) {
+
+    return new Promise((resolve, reject) => {
+
+
+        db.all(
+            sql,
+            params,
+            (err, rows) => {
+
+
+                if (err)
+
+                    reject(err);
+
+
+                else
+
+                    resolve(rows);
+
+
+            }
+        );
+
+
+    });
+
+}
+
+
+
+module.exports = {
+
+    db,
+
+    run,
+
+    get,
+
+    all
+
+};

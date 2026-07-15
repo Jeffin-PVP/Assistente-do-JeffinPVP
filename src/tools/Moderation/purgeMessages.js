@@ -4,7 +4,12 @@ const {
 
 const Tool = require("../../structures/Tool");
 
+const LogManager = require("../../managers/LogManager");
+const LogTypes = require("../../managers/LogTypes");
+
+
 module.exports = new class extends Tool {
+
 
     constructor() {
 
@@ -12,9 +17,11 @@ module.exports = new class extends Tool {
 
             name: "purgeMessages",
 
-            description: "Limpa mensagens.",
+            description: "Limpa mensagens de um canal.",
 
             category: "Moderation",
+
+            guildOnly: true,
 
             permissions: [
                 PermissionFlagsBits.ManageMessages
@@ -30,7 +37,7 @@ module.exports = new class extends Tool {
 
                         type: "integer",
 
-                        description: "Quantidade.",
+                        description: "Quantidade de mensagens.",
 
                         minimum: 1,
 
@@ -50,21 +57,29 @@ module.exports = new class extends Tool {
 
     }
 
+
+
     async execute(message, args) {
 
-        const amount = Number(args.amount);
 
-        if (isNaN(amount)) {
+        const amount =
+            Number(args.amount);
+
+
+
+        if (Number.isNaN(amount)) {
 
             return {
 
                 success: false,
 
-                message: "Quantidade inválida."
+                error: "Quantidade inválida."
 
             };
 
         }
+
+
 
         if (amount < 1 || amount > 100) {
 
@@ -72,23 +87,13 @@ module.exports = new class extends Tool {
 
                 success: false,
 
-                message: "A quantidade deve estar entre 1 e 100."
+                error: "A quantidade deve estar entre 1 e 100."
 
             };
 
         }
 
-        if (!message.guild) {
 
-            return {
-
-                success: false,
-
-                message: "Este comando só funciona em servidores."
-
-            };
-
-        }
 
         if (!message.channel.bulkDelete) {
 
@@ -96,41 +101,93 @@ module.exports = new class extends Tool {
 
                 success: false,
 
-                message: "Este canal não suporta limpeza de mensagens."
+                error: "Este canal não suporta limpeza de mensagens."
 
             };
 
         }
 
+
+
+        const channelData = {
+
+            id: message.channel.id,
+
+            name: message.channel.name
+
+        };
+
+
+
         try {
 
-            const deleted = await message.channel.bulkDelete(
-                amount,
-                true
-            );
+
+            const deleted =
+                await message.channel.bulkDelete(
+
+                    amount,
+
+                    true
+
+                );
+
+
+
+            await LogManager.send({
+
+                type: LogTypes.PURGE_MESSAGES,
+
+                guild: message.guild,
+
+                executor: message.member,
+
+                channel: channelData,
+
+                extra: {
+
+                    deleted: deleted.size
+
+                }
+
+            });
+
+
 
             return {
 
                 success: true,
 
+                action: "purge",
+
+                channel: channelData,
+
                 deleted: deleted.size,
 
-                message: `${deleted.size} mensagens removidas.`
+                logged: true,
+
+                message:
+                    `${deleted.size} mensagens removidas.`
 
             };
 
+
+
         } catch (error) {
+
 
             return {
 
                 success: false,
 
-                message: error.message
+                error: error.message
 
             };
 
+
         }
 
+
     }
+
 
 };

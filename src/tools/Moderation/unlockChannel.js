@@ -4,7 +4,12 @@ const {
 
 const Tool = require("../../structures/Tool");
 
+const LogManager = require("../../managers/LogManager");
+const LogTypes = require("../../managers/LogTypes");
+
+
 module.exports = new class extends Tool {
+
 
     constructor() {
 
@@ -12,9 +17,11 @@ module.exports = new class extends Tool {
 
             name: "unlockChannel",
 
-            description: "Destranca canal.",
+            description: "Destranca um canal.",
 
             category: "Moderation",
+
+            guildOnly: true,
 
             permissions: [
                 PermissionFlagsBits.ManageChannels
@@ -30,7 +37,7 @@ module.exports = new class extends Tool {
 
                         type: "string",
 
-                        description: "Canal."
+                        description: "ID do canal."
 
                     },
 
@@ -38,7 +45,7 @@ module.exports = new class extends Tool {
 
                         type: "string",
 
-                        description: "Nome."
+                        description: "Nome do canal."
 
                     },
 
@@ -60,23 +67,34 @@ module.exports = new class extends Tool {
 
     }
 
+
+
     async execute(message, args) {
+
 
         let channel = null;
 
+
+
         if (args.channelId) {
 
-            channel = message.guild.channels.cache.get(args.channelId);
+            channel =
+                message.guild.channels.cache.get(args.channelId);
 
         }
+
+
 
         if (!channel && args.channelName) {
 
-            channel = message.guild.channels.cache.find(c =>
-                c.name.toLowerCase() === args.channelName.toLowerCase()
-            );
+            channel =
+                message.guild.channels.cache.find(c =>
+                    c.name.toLowerCase() === args.channelName.toLowerCase()
+                );
 
         }
+
+
 
         if (!channel) {
 
@@ -84,19 +102,39 @@ module.exports = new class extends Tool {
 
         }
 
+
+
         if (!channel.permissionOverwrites) {
 
             return {
 
                 success: false,
 
-                message: "Este canal não suporta permissões."
+                error: "Este canal não suporta permissões."
 
             };
 
         }
 
+
+
+        const reason =
+            args.reason || "Canal destrancado.";
+
+
+
+        const channelData = {
+
+            id: channel.id,
+
+            name: channel.name
+
+        };
+
+
+
         try {
+
 
             await channel.permissionOverwrites.edit(
 
@@ -110,36 +148,65 @@ module.exports = new class extends Tool {
 
                 {
 
-                    reason: args.reason || "Canal destrancado."
+                    reason
 
                 }
 
             );
 
+
+
+            await LogManager.send({
+
+                type: LogTypes.UNLOCK_CHANNEL,
+
+                guild: message.guild,
+
+                executor: message.member,
+
+                channel: channelData,
+
+                reason
+
+            });
+
+
+
             return {
 
                 success: true,
 
-                channelId: channel.id,
+                action: "channel_unlock",
 
-                channelName: channel.name,
+                channel: channelData,
 
-                message: `Canal #${channel.name} destrancado.`
+                reason,
+
+                logged: true,
+
+                message:
+                    `Canal #${channel.name} destrancado.`
 
             };
 
+
+
         } catch (error) {
+
 
             return {
 
                 success: false,
 
-                message: error.message
+                error: error.message
 
             };
 
+
         }
 
+
     }
+
 
 };

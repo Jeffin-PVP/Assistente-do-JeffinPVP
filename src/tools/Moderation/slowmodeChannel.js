@@ -4,7 +4,12 @@ const {
 
 const Tool = require("../../structures/Tool");
 
+const LogManager = require("../../managers/LogManager");
+const LogTypes = require("../../managers/LogTypes");
+
+
 module.exports = new class extends Tool {
+
 
     constructor() {
 
@@ -12,9 +17,11 @@ module.exports = new class extends Tool {
 
             name: "slowmodeChannel",
 
-            description: "Altera slowmode.",
+            description: "Altera o slowmode de um canal.",
 
             category: "Moderation",
+
+            guildOnly: true,
 
             permissions: [
                 PermissionFlagsBits.ManageChannels
@@ -30,7 +37,7 @@ module.exports = new class extends Tool {
 
                         type: "integer",
 
-                        description: "Tempo.",
+                        description: "Tempo do slowmode.",
 
                         minimum: 0
 
@@ -40,7 +47,7 @@ module.exports = new class extends Tool {
 
                         type: "string",
 
-                        description: "Unidade.",
+                        description: "Unidade do tempo.",
 
                         enum: [
                             "seconds",
@@ -54,7 +61,7 @@ module.exports = new class extends Tool {
 
                         type: "string",
 
-                        description: "Canal."
+                        description: "ID do canal."
 
                     },
 
@@ -62,7 +69,7 @@ module.exports = new class extends Tool {
 
                         type: "string",
 
-                        description: "Nome."
+                        description: "Nome do canal."
 
                     },
 
@@ -86,23 +93,34 @@ module.exports = new class extends Tool {
 
     }
 
+
+
     async execute(message, args) {
+
 
         let channel = null;
 
+
+
         if (args.channelId) {
 
-            channel = message.guild.channels.cache.get(args.channelId);
+            channel =
+                message.guild.channels.cache.get(args.channelId);
 
         }
+
+
 
         if (!channel && args.channelName) {
 
-            channel = message.guild.channels.cache.find(c =>
-                c.name.toLowerCase() === args.channelName.toLowerCase()
-            );
+            channel =
+                message.guild.channels.cache.find(c =>
+                    c.name.toLowerCase() === args.channelName.toLowerCase()
+                );
 
         }
+
+
 
         if (!channel) {
 
@@ -110,19 +128,26 @@ module.exports = new class extends Tool {
 
         }
 
+
+
         if (!channel.setRateLimitPerUser) {
 
             return {
 
                 success: false,
 
-                message: "Este canal não suporta slowmode."
+                error: "Este canal não suporta slowmode."
 
             };
 
         }
 
-        const time = Number(args.time);
+
+
+        const time =
+            Number(args.time);
+
+
 
         if (Number.isNaN(time) || time < 0) {
 
@@ -130,15 +155,20 @@ module.exports = new class extends Tool {
 
                 success: false,
 
-                message: "Tempo inválido."
+                error: "Tempo inválido."
 
             };
 
         }
 
+
+
         let seconds = time;
 
+
+
         switch (args.unit) {
+
 
             case "hours":
 
@@ -146,11 +176,15 @@ module.exports = new class extends Tool {
 
                 break;
 
+
+
             case "minutes":
 
                 seconds = time * 60;
 
                 break;
+
+
 
             case "seconds":
 
@@ -160,37 +194,90 @@ module.exports = new class extends Tool {
 
         }
 
+
+
         if (seconds > 21600) {
 
             return {
 
                 success: false,
 
-                message: "O Discord permite no máximo 6 horas."
+                error: "O Discord permite no máximo 6 horas."
 
             };
 
         }
 
+
+
+        const reason =
+            args.reason || "Slowmode alterado.";
+
+
+
+        const channelData = {
+
+            id: channel.id,
+
+            name: channel.name
+
+        };
+
+
+
         try {
+
 
             await channel.setRateLimitPerUser(
 
                 seconds,
 
-                args.reason || "Slowmode alterado."
+                reason
 
             );
+
+
+
+            await LogManager.send({
+
+                type: LogTypes.SLOWMODE_CHANNEL,
+
+                guild: message.guild,
+
+                executor: message.member,
+
+                channel: channelData,
+
+                reason,
+
+                extra: {
+
+                    seconds,
+
+                    status:
+                        seconds === 0
+                            ? "removido"
+                            : "alterado"
+
+                }
+
+            });
+
+
 
             return {
 
                 success: true,
 
+                action: "slowmode",
+
+                channel: channelData,
+
                 seconds,
 
-                channelId: channel.id,
+                reason,
 
-                channelName: channel.name,
+                logged: true,
 
                 message:
 
@@ -202,18 +289,24 @@ module.exports = new class extends Tool {
 
             };
 
+
+
         } catch (error) {
+
 
             return {
 
                 success: false,
 
-                message: error.message
+                error: error.message
 
             };
 
+
         }
 
+
     }
+
 
 };

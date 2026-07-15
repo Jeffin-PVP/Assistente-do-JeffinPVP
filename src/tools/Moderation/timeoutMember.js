@@ -4,7 +4,12 @@ const {
 
 const Tool = require("../../structures/Tool");
 
+const LogManager = require("../../managers/LogManager");
+const LogTypes = require("../../managers/LogTypes");
+
+
 module.exports = new class extends Tool {
+
 
     constructor() {
 
@@ -65,15 +70,22 @@ module.exports = new class extends Tool {
 
     }
 
+
+
     async execute(message, args) {
+
 
         const reason =
             args.reason ?? "Nenhum motivo informado.";
 
+
+
         const duration =
             Number(args.duration);
 
-        if (isNaN(duration) || duration <= 0) {
+
+
+        if (Number.isNaN(duration) || duration <= 0) {
 
             return {
 
@@ -85,9 +97,12 @@ module.exports = new class extends Tool {
 
         }
 
-        // Discord permite até 28 dias
 
-        const MAX_MINUTES = 28 * 24 * 60;
+
+        const MAX_MINUTES =
+            28 * 24 * 60;
+
+
 
         if (duration > MAX_MINUTES) {
 
@@ -101,10 +116,14 @@ module.exports = new class extends Tool {
 
         }
 
+
+
         const member =
             await message.guild.members
                 .fetch(args.userId)
                 .catch(() => null);
+
+
 
         if (!member) {
 
@@ -118,6 +137,20 @@ module.exports = new class extends Tool {
 
         }
 
+
+
+        const targetData = {
+
+            id: member.id,
+
+            username: member.user.username,
+
+            displayName: member.displayName
+
+        };
+
+
+
         if (member.id === message.guild.ownerId) {
 
             return {
@@ -129,6 +162,8 @@ module.exports = new class extends Tool {
             };
 
         }
+
+
 
         if (member.id === message.client.user.id) {
 
@@ -142,6 +177,8 @@ module.exports = new class extends Tool {
 
         }
 
+
+
         if (member.id === message.author.id) {
 
             return {
@@ -153,6 +190,8 @@ module.exports = new class extends Tool {
             };
 
         }
+
+
 
         if (!member.moderatable) {
 
@@ -166,6 +205,8 @@ module.exports = new class extends Tool {
 
         }
 
+
+
         if (member.communicationDisabledUntil) {
 
             return {
@@ -178,7 +219,10 @@ module.exports = new class extends Tool {
 
         }
 
+
+
         try {
+
 
             await member.timeout(
 
@@ -188,21 +232,40 @@ module.exports = new class extends Tool {
 
             );
 
+
+
+            await LogManager.send({
+
+                type: LogTypes.TIMEOUT,
+
+                guild: message.guild,
+
+                executor: message.member,
+
+                target: targetData,
+
+                reason,
+
+                extra: {
+
+                    duration: `${duration} minuto(s)`,
+
+                    timeoutUntil:
+                        member.communicationDisabledUntil
+
+                }
+
+            });
+
+
+
             return {
 
                 success: true,
 
                 action: "timeout",
 
-                target: {
-
-                    id: member.id,
-
-                    username: member.user.username,
-
-                    displayName: member.displayName
-
-                },
+                target: targetData,
 
                 moderator: {
 
@@ -214,15 +277,22 @@ module.exports = new class extends Tool {
 
                 duration,
 
-                durationText: `${duration} minuto(s)`,
+                durationText:
+                    `${duration} minuto(s)`,
 
                 reason,
 
-                timeoutUntil: member.communicationDisabledUntil
+                timeoutUntil:
+                    member.communicationDisabledUntil,
+
+                logged: true
 
             };
 
+
+
         } catch (error) {
+
 
             return {
 
@@ -232,8 +302,11 @@ module.exports = new class extends Tool {
 
             };
 
+
         }
 
+
     }
+
 
 };

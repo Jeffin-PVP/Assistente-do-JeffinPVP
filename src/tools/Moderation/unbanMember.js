@@ -4,7 +4,12 @@ const {
 
 const Tool = require("../../structures/Tool");
 
+const LogManager = require("../../managers/LogManager");
+const LogTypes = require("../../managers/LogTypes");
+
+
 module.exports = new class extends Tool {
+
 
     constructor() {
 
@@ -12,9 +17,11 @@ module.exports = new class extends Tool {
 
             name: "unbanMember",
 
-            description: "Remove banimento.",
+            description: "Remove o banimento de um usuário.",
 
             category: "Moderation",
+
+            guildOnly: true,
 
             permissions: [
                 PermissionFlagsBits.BanMembers
@@ -30,7 +37,7 @@ module.exports = new class extends Tool {
 
                         type: "string",
 
-                        description: "ID."
+                        description: "ID do usuário banido."
 
                     },
 
@@ -38,7 +45,7 @@ module.exports = new class extends Tool {
 
                         type: "string",
 
-                        description: "Motivo."
+                        description: "Motivo do desbanimento."
 
                     }
 
@@ -54,13 +61,23 @@ module.exports = new class extends Tool {
 
     }
 
+
+
     async execute(message, args) {
+
 
         try {
 
-            const bans = await message.guild.bans.fetch();
 
-            const ban = bans.get(args.userId);
+            const bans =
+                await message.guild.bans.fetch();
+
+
+
+            const ban =
+                bans.get(args.userId);
+
+
 
             if (!ban) {
 
@@ -68,44 +85,106 @@ module.exports = new class extends Tool {
 
                     success: false,
 
-                    message: "Usuário não está banido."
+                    error: "Usuário não está banido."
 
                 };
 
             }
 
+
+
+            const reason =
+                args.reason || "Banimento removido.";
+
+
+
+            const targetData = {
+
+                id: ban.user.id,
+
+                username: ban.user.username,
+
+                tag: ban.user.tag
+
+            };
+
+
+
             await message.guild.members.unban(
 
                 args.userId,
 
-                args.reason || "Banimento removido."
+                reason
 
             );
+
+
+
+            await LogManager.send({
+
+                type: LogTypes.UNBAN_MEMBER,
+
+                guild: message.guild,
+
+                executor: message.member,
+
+                target: targetData,
+
+                reason,
+
+                extra: {
+
+                    action: "ban_removed"
+
+                }
+
+            });
+
+
 
             return {
 
                 success: true,
 
-                userId: args.userId,
+                action: "unban",
 
-                username: ban.user.username,
+                target: targetData,
 
-                message: `${ban.user.tag} foi desbanido.`
+                moderator: {
+
+                    id: message.author.id,
+
+                    username: message.author.username
+
+                },
+
+                reason,
+
+                logged: true,
+
+                message:
+                    `${ban.user.tag} foi desbanido.`
 
             };
 
+
+
         } catch (error) {
+
 
             return {
 
                 success: false,
 
-                message: error.message
+                error: error.message
 
             };
 
+
         }
 
+
     }
+
 
 };

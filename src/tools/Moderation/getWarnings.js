@@ -1,7 +1,11 @@
 const Tool = require("../../structures/Tool");
-const database = require("../../database/database");
+
+const WarningRepository =
+    require("../../database/repositories/WarningRepository");
+
 
 module.exports = new class extends Tool {
+
 
     constructor() {
 
@@ -9,9 +13,13 @@ module.exports = new class extends Tool {
 
             name: "getWarnings",
 
-            description: "Consulta advertências.",
+            description: "Consulta advertências de um membro.",
 
             category: "Moderation",
+
+            guildOnly: true,
+
+            permissions: [],
 
             parameters: {
 
@@ -23,14 +31,16 @@ module.exports = new class extends Tool {
 
                         type: "string",
 
-                        description: "ID."
+                        description: "ID do membro."
 
                     }
 
                 },
 
                 required: [
+
                     "userId"
+
                 ]
 
             }
@@ -39,48 +49,144 @@ module.exports = new class extends Tool {
 
     }
 
+
+
     async execute(message, args) {
+
 
         try {
 
-            const warnings = database.prepare(`
-                SELECT
-                    reason,
-                    moderatorId,
-                    createdAt
-                FROM warnings
-                WHERE guildId = ?
-                AND userId = ?
-                ORDER BY createdAt DESC
-            `).all(
 
-                message.guild.id,
-                args.userId
+            const member =
+                await message.guild.members
+                    .fetch(args.userId)
+                    .catch(() => null);
 
-            );
+
+
+            if (!member) {
+
+                return {
+
+                    success: false,
+
+                    error: "Membro não encontrado."
+
+                };
+
+            }
+
+
+
+            const warnings =
+                await WarningRepository.getUserWarnings({
+
+                    guildId: message.guild.id,
+
+                    userId: member.id
+
+                });
+
+
+
+            if (!warnings.length) {
+
+
+                return {
+
+                    success: true,
+
+                    user: {
+
+                        id: member.id,
+
+                        username: member.user.username,
+
+                        displayName: member.displayName
+
+                    },
+
+                    total: 0,
+
+                    message:
+                        "Este membro não possui advertências."
+
+                };
+
+
+            }
+
+
+
+            const formattedWarnings =
+                warnings.map((warn, index) => ({
+
+
+                    number:
+                        index + 1,
+
+
+                    reason:
+                        warn.reason,
+
+
+                    moderatorId:
+                        warn.moderator_id,
+
+
+                    date:
+                        warn.created_at
+
+
+                }));
+
+
 
             return {
 
+
                 success: true,
 
-                total: warnings.length,
 
-                warnings
+                user: {
+
+                    id: member.id,
+
+                    username: member.user.username,
+
+                    displayName: member.displayName
+
+                },
+
+
+                total:
+                    formattedWarnings.length,
+
+
+                warnings:
+                    formattedWarnings
+
 
             };
 
+
+
         } catch (error) {
+
 
             return {
 
                 success: false,
 
-                message: error.message
+                error: error.message
 
             };
 
+
         }
 
+
     }
+
 
 };

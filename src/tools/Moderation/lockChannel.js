@@ -4,7 +4,12 @@ const {
 
 const Tool = require("../../structures/Tool");
 
+const LogManager = require("../../managers/LogManager");
+const LogTypes = require("../../managers/LogTypes");
+
+
 module.exports = new class extends Tool {
+
 
     constructor() {
 
@@ -12,9 +17,11 @@ module.exports = new class extends Tool {
 
             name: "lockChannel",
 
-            description: "Tranca canal.",
+            description: "Tranca um canal do servidor.",
 
             category: "Moderation",
+
+            guildOnly: true,
 
             permissions: [
                 PermissionFlagsBits.ManageChannels
@@ -30,7 +37,7 @@ module.exports = new class extends Tool {
 
                         type: "string",
 
-                        description: "Canal."
+                        description: "ID do canal."
 
                     },
 
@@ -54,9 +61,15 @@ module.exports = new class extends Tool {
 
     }
 
+
+
     async execute(message, args) {
 
-        const channel = message.guild.channels.cache.get(args.channelId);
+
+        const channel =
+            message.guild.channels.cache.get(args.channelId);
+
+
 
         if (!channel) {
 
@@ -64,11 +77,13 @@ module.exports = new class extends Tool {
 
                 success: false,
 
-                message: "Canal não encontrado."
+                error: "Canal não encontrado."
 
             };
 
         }
+
+
 
         if (!channel.permissionOverwrites) {
 
@@ -76,13 +91,31 @@ module.exports = new class extends Tool {
 
                 success: false,
 
-                message: "Este canal não suporta permissões."
+                error: "Este canal não suporta permissões."
 
             };
 
         }
 
+
+
+        const reason =
+            args.reason || "Canal trancado.";
+
+
+
+        const channelData = {
+
+            id: channel.id,
+
+            name: channel.name
+
+        };
+
+
+
         try {
+
 
             await channel.permissionOverwrites.edit(
 
@@ -96,36 +129,62 @@ module.exports = new class extends Tool {
 
                 {
 
-                    reason: args.reason || "Canal trancado."
+                    reason
 
                 }
 
             );
 
+
+
+            await LogManager.send({
+
+                type: LogTypes.CHANNEL_LOCK,
+
+                guild: message.guild,
+
+                executor: message.member,
+
+                channel: channelData,
+
+                reason
+
+            });
+
+
+
             return {
 
                 success: true,
 
-                channelId: channel.id,
+                action: "channel_lock",
 
-                channelName: channel.name,
+                channel: channelData,
 
-                message: `Canal #${channel.name} trancado.`
+                reason,
+
+                logged: true
 
             };
 
+
+
         } catch (error) {
+
 
             return {
 
                 success: false,
 
-                message: error.message
+                error: error.message
 
             };
 
+
         }
 
+
     }
+
 
 };
