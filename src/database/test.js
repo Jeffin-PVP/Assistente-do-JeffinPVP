@@ -1,74 +1,11 @@
-const database = require("./database");
+const GuildRepository = require("./repositories/GuildRepository");
 
+(async () => {
 
-async function test() {
+    const settings = await GuildRepository.getSettings(
+        "1518326828878663740"
+    );
 
-    console.log("🧪 Iniciando teste do banco...");
+    console.log(settings);
 
-
-    // Inserir usuário de teste
-
-    await database.run(`
-
-        INSERT OR IGNORE INTO users
-        (
-            user_id,
-            guild_id,
-            coins
-        )
-
-        VALUES
-        (
-            ?,
-            ?,
-            ?
-        )
-
-    `, [
-
-        "123456789",
-
-        "987654321",
-
-        100
-
-    ]);
-
-
-
-    console.log("✅ Usuário criado");
-
-
-    // Buscar usuário
-
-    const user = await database.get(`
-
-        SELECT *
-
-        FROM users
-
-        WHERE user_id = ?
-
-    `, [
-
-        "123456789"
-
-    ]);
-
-
-
-    console.log("📄 Dados encontrados:");
-
-    console.log(user);
-
-
-
-    console.log("✅ Teste finalizado");
-
-
-    process.exit();
-
-}
-
-
-test();
+})();

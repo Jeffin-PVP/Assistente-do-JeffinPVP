@@ -270,7 +270,32 @@ class ToolSelector {
                 ]
             }
 
+        ],
+
+        configuration: [
+
+    {
+
+        keywords: [
+
+            "canal de logs",
+            "logs",
+            "log",
+            "configurar logs",
+            "definir logs",
+            "setar logs"
+
+        ],
+
+        tools: [
+
+            "setLogChannel"
+
         ]
+
+    }
+
+],
 
     };
 

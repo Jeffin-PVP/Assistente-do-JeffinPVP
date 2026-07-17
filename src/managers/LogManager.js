@@ -1,16 +1,12 @@
-const database = require("../database/database");
+const GuildRepository = require("../database/repositories/GuildRepository");
 
 const Builders = require("./logs");
 
-
 class LogManager {
-
 
     static async send(data) {
 
-
         try {
-
 
             if (!data.guild) {
 
@@ -22,140 +18,83 @@ class LogManager {
 
             }
 
+            // Busca o canal de logs
 
-
-            // Busca configuração do servidor
-
-            const config =
-                await database.get(`
-
-                    SELECT
-                        log_channel
-
-                    FROM guild_settings
-
-                    WHERE guild_id = ?
-
-                `, [
-
-                    data.guild.id
-
-                ]);
-
-
-
-            if (!config?.log_channel) {
-
-
-                console.log(
-                    "[LogManager] Canal de logs não configurado para:",
+            const logChannelId =
+                await GuildRepository.getLogChannel(
                     data.guild.id
                 );
 
+            if (!logChannelId) {
+
+                console.log(
+                    "[LogManager] Canal de logs não configurado."
+                );
 
                 return false;
 
-
             }
 
-
-
-            // Busca canal
+            // Busca o canal
 
             const channel =
-                await data.guild.channels.fetch(
-                    config.log_channel
-                )
-                .catch(() => null);
-
-
+                await data.guild.channels
+                    .fetch(logChannelId)
+                    .catch(() => null);
 
             if (!channel) {
-
 
                 console.log(
                     "[LogManager] Canal de logs não encontrado."
                 );
 
-
                 return false;
-
 
             }
 
-
-
-            // Cria embed
+            // Cria o embed
 
             const embed =
                 Builders.create(data);
 
-
-
             if (!embed) {
 
-
                 console.log(
-                    "[LogManager] Falha ao criar embed:",
+                    "[LogManager] Nenhum builder encontrado para:",
                     data.type
                 );
 
-
                 return false;
 
-
             }
-
-
 
             await channel.send({
 
                 embeds: [
-
                     embed
-
                 ]
 
             });
 
-
-
             console.log(
-
-                "📋 Log enviado:",
-
-                data.type
-
+                `📋 Log enviado (${data.type})`
             );
-
-
 
             return true;
 
-
-
         } catch (error) {
 
-
             console.error(
-
-                "❌ [LogManager]",
-
+                "[LogManager]",
                 error
-
             );
-
 
             return false;
 
-
         }
-
 
     }
 
-
 }
-
 
 module.exports = LogManager;

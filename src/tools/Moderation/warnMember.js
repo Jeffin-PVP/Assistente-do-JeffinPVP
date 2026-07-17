@@ -238,7 +238,7 @@ module.exports = new class extends Tool {
 
             await LogManager.send({
 
-                type: LogTypes.WARN_MEMBER,
+                type: LogTypes.WARN,
 
                 guild: message.guild,
 

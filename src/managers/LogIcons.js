@@ -1,10 +1,16 @@
 module.exports = {
 
+    /*
+    =========================
+        MODERAÇÃO
+    =========================
+    */
+
     BAN: "🔨",
-    UNBAN: "♻",
+    UNBAN: "♻️",
     KICK: "👢",
-    WARN: "⚠",
-    REMOVE_WARN: "🗑",
+    WARN: "⚠️",
+    REMOVE_WARN: "🗑️",
     TIMEOUT: "🔇",
     REMOVE_TIMEOUT: "🔊",
     PURGE: "🧹",
@@ -12,24 +18,118 @@ module.exports = {
     UNLOCK: "🔓",
     SLOWMODE: "🐢",
 
-    MEMBER: "👤",
+    /*
+    =========================
+        MEMBROS
+    =========================
+    */
 
-    MESSAGE: "💬",
+    MEMBER_JOIN: "📥",
+    MEMBER_LEAVE: "📤",
+    MEMBER_BOOST: "🚀",
+    MEMBER_UNBOOST: "📉",
+    MEMBER_NICKNAME: "📝",
 
-    CHANNEL: "📁",
+    /*
+    =========================
+        MENSAGENS
+    =========================
+    */
 
-    ROLE: "🎭",
+    MESSAGE_DELETE: "🗑️",
+    MESSAGE_EDIT: "✏️",
+    MESSAGE_BULK_DELETE: "🧹",
 
-    VOICE: "🎙",
+    /*
+    =========================
+        CANAIS
+    =========================
+    */
 
-    MONEY: "💰",
+    CHANNEL_CREATE: "📁",
+    CHANNEL_DELETE: "🗑️",
+    CHANNEL_UPDATE: "✏️",
 
-    GAME: "🎮",
+    /*
+    =========================
+        CARGOS
+    =========================
+    */
 
-    TICKET: "🎫",
+    ROLE_CREATE: "🎭",
+    ROLE_DELETE: "🗑️",
+    ROLE_UPDATE: "✏️",
+    ROLE_ADD: "➕",
+    ROLE_REMOVE: "➖",
 
-    AI: "🤖",
+    /*
+    =========================
+        VOZ
+    =========================
+    */
 
-    SYSTEM: "⚙"
+    VOICE_JOIN: "🎙️",
+    VOICE_LEAVE: "🚪",
+    VOICE_MOVE: "🔄",
+
+    /*
+    =========================
+        ECONOMIA
+    =========================
+    */
+
+    DAILY: "📅",
+    WORK: "💼",
+    CRIME: "🦹",
+    ROB: "🥷",
+    DEPOSIT: "🏦",
+    WITHDRAW: "💸",
+    TRANSFER: "💳",
+    BUY: "🛒",
+    SELL: "🏷️",
+    MONEY_ADD: "➕💰",
+    MONEY_REMOVE: "➖💰",
+
+    /*
+    =========================
+        JOGOS
+    =========================
+    */
+
+    SLOTS: "🎰",
+    BLACKJACK: "🃏",
+    COINFLIP: "🪙",
+    ROULETTE: "🎡",
+
+    /*
+    =========================
+        TICKETS
+    =========================
+    */
+
+    TICKET_CREATE: "🎫",
+    TICKET_CLOSE: "🔒",
+    TICKET_REOPEN: "🔓",
+    TICKET_DELETE: "🗑️",
+
+    /*
+    =========================
+        IA
+    =========================
+    */
+
+    AI_COMMAND: "🤖",
+    AI_TOOL: "🛠️",
+    AI_ERROR: "❌",
+
+    /*
+    =========================
+        SISTEMA
+    =========================
+    */
+
+    BOT_START: "🟢",
+    BOT_STOP: "🔴",
+    DATABASE_ERROR: "💾❌"
 
 };

@@ -139,7 +139,7 @@ module.exports = new class extends Tool {
 
             await LogManager.send({
 
-                type: LogTypes.CHANNEL_LOCK,
+                type: LogTypes.LOCK_CHANNEL,
 
                 guild: message.guild,
 

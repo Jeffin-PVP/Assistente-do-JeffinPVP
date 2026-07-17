@@ -3,6 +3,23 @@ class IntentRouter {
     static intents = [
 
         {
+            name: "configuration",
+
+            keywords: [
+                "log",
+                "logs",
+                "canal de logs",
+                "configurar logs",
+                "definir canal de logs",
+                "setar canal de logs",
+                "setlogchannel",
+                "configuração",
+                "configuracao",
+                "configurar"
+            ]
+        },
+
+        {
             name: "moderation",
 
             keywords: [
