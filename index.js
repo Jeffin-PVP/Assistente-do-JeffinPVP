@@ -217,7 +217,7 @@ client.once(
         );
 
         console.log(
-            "🤖 JeffinPVP_Bot"
+            "🤖 JarvisCore"
         );
 
         console.log(
