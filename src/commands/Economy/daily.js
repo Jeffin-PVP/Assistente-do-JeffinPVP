@@ -5,7 +5,7 @@ const {
 
 const EconomyManager = require("../../managers/EconomyManager");
 
-const DAILY_AMOUNT = 500;
+const DAILY_AMOUNT = 100;
 const DAILY_COOLDOWN = 24 * 60 * 60 * 1000;
 
 module.exports = {

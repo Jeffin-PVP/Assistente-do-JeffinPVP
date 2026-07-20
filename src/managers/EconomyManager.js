@@ -409,6 +409,144 @@ class EconomyManager {
 
     }
 
+    /*
+=========================
+    PAGAMENTO
+=========================
+*/
+
+    static async pay(
+        guildId,
+        fromUserId,
+        toUserId,
+        amount
+    ) {
+
+        if (amount <= 0) {
+
+            return {
+
+                success: false,
+
+                reason: "invalid_amount"
+
+            };
+
+        }
+
+        if (fromUserId === toUserId) {
+
+            return {
+
+                success: false,
+
+                reason: "same_user"
+
+            };
+
+        }
+
+        const sender =
+            await EconomyRepository.getUser(
+
+                guildId,
+
+                fromUserId
+
+            );
+
+        if (sender.wallet < amount) {
+
+            return {
+
+                success: false,
+
+                reason: "insufficient_funds",
+
+                wallet: sender.wallet
+
+            };
+
+        }
+
+        const transferred =
+            await EconomyRepository.transfer(
+
+                guildId,
+
+                fromUserId,
+
+                toUserId,
+
+                amount
+
+            );
+
+        if (!transferred) {
+
+            return {
+
+                success: false,
+
+                reason: "transfer_failed"
+
+            };
+
+        }
+
+        const senderUpdated =
+            await this.getProfile(
+
+                guildId,
+
+                fromUserId
+
+            );
+
+        const receiverUpdated =
+            await this.getProfile(
+
+                guildId,
+
+                toUserId
+
+            );
+
+        return {
+
+            success: true,
+
+            amount,
+
+            sender: senderUpdated,
+
+            receiver: receiverUpdated
+
+        };
+
+    }
+
+    /*
+=========================
+    LEADERBOARD
+=========================
+*/
+
+    static async getLeaderboard(
+        guildId,
+        limit = 10
+    ) {
+
+        return await EconomyRepository.getLeaderboard(
+
+            guildId,
+
+            limit
+
+        );
+
+    }
+
 }
 
 module.exports = EconomyManager;

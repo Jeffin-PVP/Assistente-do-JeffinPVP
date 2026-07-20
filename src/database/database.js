@@ -68,8 +68,39 @@ db.serialize(() => {
             )
 
         );
-
     `);
+
+    db.run(`
+ALTER TABLE economy_users
+ADD COLUMN daily_at INTEGER DEFAULT NULL;
+`, err => {
+
+        if (
+            err &&
+            !err.message.includes("duplicate column")
+        ) {
+
+            console.error(err);
+
+        }
+
+    });
+
+    db.run(`
+ALTER TABLE economy_users
+ADD COLUMN work_at INTEGER DEFAULT NULL;
+`, err => {
+
+        if (
+            err &&
+            !err.message.includes("duplicate column")
+        ) {
+
+            console.error(err);
+
+        }
+
+    });
 
     /*
     =========================
@@ -81,21 +112,21 @@ db.serialize(() => {
 
         CREATE TABLE IF NOT EXISTS economy_transactions (
 
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-            guild_id TEXT NOT NULL,
+        guild_id TEXT NOT NULL,
 
-            user_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
 
-            amount INTEGER NOT NULL,
+        amount INTEGER NOT NULL,
 
-            type TEXT NOT NULL,
+        type TEXT NOT NULL,
 
-            description TEXT,
+        description TEXT,
 
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 
-        );
+);
 
     `);
 
@@ -220,7 +251,7 @@ function run(sql, params = []) {
         db.run(
             sql,
             params,
-            function(err) {
+            function (err) {
 
                 if (err)
                     reject(err);
@@ -287,3 +318,17 @@ module.exports = {
     all
 
 };
+
+db.all("PRAGMA table_info(economy_users);", (err, rows) => {
+
+    if (err) {
+
+        console.error(err);
+
+    } else {
+
+        console.table(rows);
+
+    }
+
+});

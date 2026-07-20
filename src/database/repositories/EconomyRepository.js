@@ -3,9 +3,9 @@ const database = require("../database");
 class EconomyRepository {
 
     /*
-    =========================
-        OBTÉM O USUÁRIO
-    =========================
+    =====================================
+    OBTÉM OU CRIA O USUÁRIO
+    =====================================
     */
 
     static async getUser(
@@ -23,10 +23,8 @@ class EconomyRepository {
             `,
 
             [
-
                 guildId,
                 userId
-
             ]
 
         );
@@ -47,10 +45,8 @@ class EconomyRepository {
                 `,
 
                 [
-
                     guildId,
                     userId
-
                 ]
 
             );
@@ -65,10 +61,8 @@ class EconomyRepository {
                 `,
 
                 [
-
                     guildId,
                     userId
-
                 ]
 
             );
@@ -80,42 +74,9 @@ class EconomyRepository {
     }
 
     /*
-    =========================
-        EXISTE?
-    =========================
-    */
-
-    static async exists(
-        guildId,
-        userId
-    ) {
-
-        const row = await database.get(
-
-            `
-            SELECT user_id
-            FROM economy_users
-            WHERE guild_id = ?
-            AND user_id = ?
-            `,
-
-            [
-
-                guildId,
-                userId
-
-            ]
-
-        );
-
-        return !!row;
-
-    }
-
-    /*
-    =========================
-        UPDATE GENÉRICO
-    =========================
+    =====================================
+    UPDATE GENÉRICO
+    =====================================
     */
 
     static async update(
@@ -135,14 +96,15 @@ class EconomyRepository {
         if (!keys.length)
             return;
 
-        const fields =
-            keys
-                .map(key => `${key} = ?`)
-                .join(", ");
+        const fields = keys
+            .map(key => `${key} = ?`)
+            .join(", ");
 
         const params = [
 
-            ...keys.map(key => values[key]),
+            ...keys.map(
+                key => values[key]
+            ),
 
             guildId,
             userId
@@ -165,9 +127,9 @@ class EconomyRepository {
     }
 
     /*
-    =========================
-        CARTEIRA
-    =========================
+    =====================================
+    CARTEIRA
+    =====================================
     */
 
     static async getWallet(
@@ -194,15 +156,11 @@ class EconomyRepository {
         await this.update(
 
             guildId,
+
             userId,
 
             {
-
-                wallet: Math.max(
-                    0,
-                    amount
-                )
-
+                wallet: amount
             }
 
         );
@@ -224,6 +182,7 @@ class EconomyRepository {
         await this.setWallet(
 
             guildId,
+
             userId,
 
             wallet + amount
@@ -247,18 +206,22 @@ class EconomyRepository {
         await this.setWallet(
 
             guildId,
+
             userId,
 
-            wallet - amount
+            Math.max(
+                0,
+                wallet - amount
+            )
 
         );
 
     }
 
     /*
-    =========================
-        BANCO
-    =========================
+    =====================================
+    BANCO
+    =====================================
     */
 
     static async getBank(
@@ -285,15 +248,11 @@ class EconomyRepository {
         await this.update(
 
             guildId,
+
             userId,
 
             {
-
-                bank: Math.max(
-                    0,
-                    amount
-                )
-
+                bank: amount
             }
 
         );
@@ -315,6 +274,7 @@ class EconomyRepository {
         await this.setBank(
 
             guildId,
+
             userId,
 
             bank + amount
@@ -338,17 +298,107 @@ class EconomyRepository {
         await this.setBank(
 
             guildId,
+
             userId,
 
-            bank - amount
+            Math.max(
+                0,
+                bank - amount
+            )
 
         );
 
     }
-        /*
-    =========================
-        XP
-    =========================
+    /*
+=====================================
+DAILY
+=====================================
+*/
+
+    static async getDaily(
+        guildId,
+        userId
+    ) {
+
+        const user =
+            await this.getUser(
+                guildId,
+                userId
+            );
+
+        return user.daily_at || 0;
+
+    }
+
+    static async setDaily(
+        guildId,
+        userId,
+        timestamp
+    ) {
+
+        await this.update(
+
+            guildId,
+
+            userId,
+
+            {
+
+                daily_at: timestamp
+
+            }
+
+        );
+
+    }
+
+    /*
+    =====================================
+    WORK
+    =====================================
+    */
+
+    static async getWork(
+        guildId,
+        userId
+    ) {
+
+        const user =
+            await this.getUser(
+                guildId,
+                userId
+            );
+
+        return user.work_at || 0;
+
+    }
+
+    static async setWork(
+        guildId,
+        userId,
+        timestamp
+    ) {
+
+        await this.update(
+
+            guildId,
+
+            userId,
+
+            {
+
+                work_at: timestamp
+
+            }
+
+        );
+
+    }
+
+    /*
+    =====================================
+    XP
+    =====================================
     */
 
     static async getXP(
@@ -369,20 +419,18 @@ class EconomyRepository {
     static async setXP(
         guildId,
         userId,
-        amount
+        xp
     ) {
 
         await this.update(
 
             guildId,
+
             userId,
 
             {
 
-                xp: Math.max(
-                    0,
-                    amount
-                )
+                xp
 
             }
 
@@ -405,6 +453,7 @@ class EconomyRepository {
         await this.setXP(
 
             guildId,
+
             userId,
 
             xp + amount
@@ -414,9 +463,9 @@ class EconomyRepository {
     }
 
     /*
-    =========================
-        LEVEL
-    =========================
+    =====================================
+    LEVEL
+    =====================================
     */
 
     static async getLevel(
@@ -443,14 +492,12 @@ class EconomyRepository {
         await this.update(
 
             guildId,
+
             userId,
 
             {
 
-                level: Math.max(
-                    1,
-                    level
-                )
+                level
 
             }
 
@@ -459,96 +506,12 @@ class EconomyRepository {
     }
 
     /*
-    =========================
-        DAILY
-    =========================
+    =====================================
+    TRANSAÇÕES
+    =====================================
     */
 
-    static async getDaily(
-        guildId,
-        userId
-    ) {
-
-        const user =
-            await this.getUser(
-                guildId,
-                userId
-            );
-
-        return user.daily_at;
-
-    }
-
-    static async setDaily(
-        guildId,
-        userId,
-        timestamp
-    ) {
-
-        await this.update(
-
-            guildId,
-            userId,
-
-            {
-
-                daily_at: timestamp
-
-            }
-
-        );
-
-    }
-
-    /*
-    =========================
-        WORK
-    =========================
-    */
-
-    static async getWork(
-        guildId,
-        userId
-    ) {
-
-        const user =
-            await this.getUser(
-                guildId,
-                userId
-            );
-
-        return user.work_at;
-
-    }
-
-    static async setWork(
-        guildId,
-        userId,
-        timestamp
-    ) {
-
-        await this.update(
-
-            guildId,
-            userId,
-
-            {
-
-                work_at: timestamp
-
-            }
-
-        );
-
-    }
-
-    /*
-    =========================
-        TRANSAÇÕES
-    =========================
-    */
-
-    static async createTransaction({
+    static async createTransaction(
 
         guildId,
 
@@ -560,11 +523,12 @@ class EconomyRepository {
 
         reason = null
 
-    }) {
+    ) {
 
         await database.run(
 
             `
+
             INSERT INTO economy_transactions (
 
                 guild_id,
@@ -580,6 +544,7 @@ class EconomyRepository {
             )
 
             VALUES (?, ?, ?, ?, ?)
+
             `,
 
             [
@@ -610,15 +575,22 @@ class EconomyRepository {
 
     ) {
 
-        return await database.all(
+        return database.all(
 
             `
+
             SELECT *
+
             FROM economy_transactions
+
             WHERE guild_id = ?
+
             AND user_id = ?
+
             ORDER BY id DESC
+
             LIMIT ?
+
             `,
 
             [
@@ -634,63 +606,46 @@ class EconomyRepository {
         );
 
     }
-
     /*
-    =========================
-        LEADERBOARD
-    =========================
-    */
+=====================================
+VERIFICA SE O USUÁRIO EXISTE
+=====================================
+*/
 
-    static async getLeaderboard(
-
+    static async hasUser(
         guildId,
-
-        limit = 10
-
+        userId
     ) {
 
-        return await database.all(
+        const user = await database.get(
 
             `
-            SELECT *
-
+            SELECT 1
             FROM economy_users
-
             WHERE guild_id = ?
-
-            ORDER BY
-
-                (wallet + bank)
-
-            DESC
-
-            LIMIT ?
+            AND user_id = ?
             `,
 
             [
-
                 guildId,
-
-                limit
-
+                userId
             ]
 
         );
 
+        return !!user;
+
     }
 
     /*
-    =========================
-        RESET
-    =========================
+    =====================================
+    RESETA O USUÁRIO
+    =====================================
     */
 
     static async resetUser(
-
         guildId,
-
         userId
-
     ) {
 
         await this.update(
@@ -719,39 +674,246 @@ class EconomyRepository {
 
     }
 
-    static async resetGuild(
+    /*
+    =====================================
+    REMOVE O USUÁRIO
+    =====================================
+    */
 
-        guildId
-
+    static async deleteUser(
+        guildId,
+        userId
     ) {
 
         await database.run(
 
             `
             DELETE FROM economy_users
-
             WHERE guild_id = ?
+            AND user_id = ?
             `,
 
             [
+                guildId,
+                userId
+            ]
 
-                guildId
+        );
+
+    }
+
+    /*
+    =====================================
+    RANKING
+    =====================================
+    */
+
+    static async getLeaderboard(
+        guildId,
+        limit = 10
+    ) {
+
+        return database.all(
+
+            `
+            SELECT
+                *,
+                (wallet + bank) AS total
+            FROM economy_users
+            WHERE guild_id = ?
+            ORDER BY total DESC
+            LIMIT ?
+            `,
+
+            [
+                guildId,
+                limit
+            ]
+
+        );
+
+    }
+
+    /*
+=====================================
+TRANSFERÊNCIA
+=====================================
+*/
+
+    static async transfer(
+        guildId,
+        fromUserId,
+        toUserId,
+        amount
+    ) {
+
+        // Garante que ambos existam
+        await this.getUser(
+            guildId,
+            fromUserId
+        );
+
+        await this.getUser(
+            guildId,
+            toUserId
+        );
+
+        const sender =
+            await this.getUser(
+                guildId,
+                fromUserId
+            );
+
+        if (sender.wallet < amount) {
+
+            return false;
+
+        }
+
+        // Remove do remetente
+        await this.removeWallet(
+
+            guildId,
+
+            fromUserId,
+
+            amount
+
+        );
+
+        // Adiciona ao destinatário
+        await this.addWallet(
+
+            guildId,
+
+            toUserId,
+
+            amount
+
+        );
+
+        // Histórico
+        await this.addTransaction(
+
+            guildId,
+
+            fromUserId,
+
+            -amount,
+
+            "PAY",
+
+            `Transferência para ${toUserId}`
+
+        );
+
+        await this.addTransaction(
+
+            guildId,
+
+            toUserId,
+
+            amount,
+
+            "PAY",
+
+            `Recebido de ${fromUserId}`
+
+        );
+
+        return true;
+
+    }
+
+    /*
+=====================================
+TRANSAÇÕES
+=====================================
+*/
+
+    static async addTransaction(
+        guildId,
+        userId,
+        amount,
+        type,
+        description = null
+    ) {
+
+        await database.run(
+
+            `
+        INSERT INTO economy_transactions (
+
+            guild_id,
+
+            user_id,
+
+            amount,
+
+            type,
+
+            description
+
+        )
+        VALUES (?, ?, ?, ?, ?)
+        `,
+
+            [
+
+                guildId,
+
+                userId,
+
+                amount,
+
+                type,
+
+                description
 
             ]
 
         );
 
-        await database.run(
+    }
+
+    /*
+    =====================================
+    LEADERBOARD
+    =====================================
+    */
+
+    static async getLeaderboard(
+        guildId,
+        limit = 10
+    ) {
+
+        return await database.all(
 
             `
-            DELETE FROM economy_transactions
+        SELECT
 
-            WHERE guild_id = ?
-            `,
+            user_id,
+
+            wallet,
+
+            bank,
+
+            xp,
+
+            level,
+
+            (wallet + bank) AS total
+
+        FROM economy_users
+
+        ORDER BY total DESC
+
+        LIMIT ?
+        `,
 
             [
 
-                guildId
+                limit
 
             ]
 
